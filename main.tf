@@ -31,6 +31,8 @@ resource "azapi_resource" "static_cidr" {
 }
 
 resource "time_sleep" "wait_lock" {
+  count = var.lock != null ? 1 : 0
+
   destroy_duration = "10s"
 
   depends_on = [azapi_resource.ipam_pool]

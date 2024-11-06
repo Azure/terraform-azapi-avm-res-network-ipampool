@@ -43,11 +43,6 @@ variable "network_manager_id" {
   nullable    = false
 }
 
-variable "parent_pool_name" {
-  type        = string
-  description = "The parent pool name for the Network Manager IPAM Pool resource"
-}
-
 # required AVM interfaces
 # remove only if not supported by the resource
 # tflint-ignore: terraform_unused_declarations
@@ -79,6 +74,12 @@ DESCRIPTION
     condition     = var.lock != null ? contains(["CanNotDelete", "ReadOnly"], var.lock.kind) : true
     error_message = "The lock level must be one of: 'None', 'CanNotDelete', or 'ReadOnly'."
   }
+}
+
+variable "parent_pool_name" {
+  type        = string
+  default     = ""
+  description = "The parent pool name for the Network Manager IPAM Pool resource"
 }
 
 variable "role_assignments" {

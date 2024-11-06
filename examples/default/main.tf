@@ -9,13 +9,16 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
 }
-
 ## Section to provide a random Azure region for the resource group
 # This allows us to randomize the region for the resource group.
 module "regions" {
@@ -55,11 +58,19 @@ resource "azurerm_network_manager" "example" {
   }
 }
 
+resource "time_sleep" "wait" {
+  destroy_duration = "30s"
+
+  depends_on = [azurerm_network_manager.example]
+}
+
 # This is the module call
 # Do not specify location here due to the randomization above.
 # Leaving location as `null` will cause the module to use the resource group location
 # with a data source.
 module "ipampool" {
+  depends_on = [time_sleep.wait]
+
   source = "../../"
   # source             = "Azure/avm-network-ipampool/azapi"
   location           = azurerm_resource_group.example.location

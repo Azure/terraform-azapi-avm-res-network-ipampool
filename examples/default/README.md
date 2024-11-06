@@ -15,13 +15,16 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
 }
-
 ## Section to provide a random Azure region for the resource group
 # This allows us to randomize the region for the resource group.
 module "regions" {
@@ -61,11 +64,19 @@ resource "azurerm_network_manager" "example" {
   }
 }
 
+resource "time_sleep" "wait" {
+  destroy_duration = "30s"
+
+  depends_on = [azurerm_network_manager.example]
+}
+
 # This is the module call
 # Do not specify location here due to the randomization above.
 # Leaving location as `null` will cause the module to use the resource group location
 # with a data source.
 module "ipampool" {
+  depends_on = [time_sleep.wait]
+
   source = "../../"
   # source             = "Azure/avm-network-ipampool/azapi"
   location           = azurerm_resource_group.example.location
@@ -94,6 +105,8 @@ The following requirements are needed by this module:
 
 - <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
 
+- <a name="requirement_time"></a> [time](#requirement\_time) (~> 0.9)
+
 ## Resources
 
 The following resources are used by this module:
@@ -101,12 +114,17 @@ The following resources are used by this module:
 - [azurerm_network_manager.example](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_manager) (resource)
 - [azurerm_resource_group.example](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
 - [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
+- [time_sleep.wait](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) (resource)
 - [azurerm_subscription.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/subscription) (data source)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-The following input variables are required:
+No required inputs.
+
+## Optional Inputs
+
+The following input variables are optional (have default values):
 
 ### <a name="input_address_prefixes"></a> [address\_prefixes](#input\_address\_prefixes)
 
@@ -114,11 +132,21 @@ Description: The address prefixes for the Network Manager IPAM Pool resource
 
 Type: `list(string)`
 
+Default:
+
+```json
+[
+  "10.0.0.0/24"
+]
+```
+
 ### <a name="input_description"></a> [description](#input\_description)
 
 Description: The description for the Network Manager IPAM Pool resource
 
 Type: `string`
+
+Default: `""`
 
 ### <a name="input_display_name"></a> [display\_name](#input\_display\_name)
 
@@ -126,21 +154,7 @@ Description: The display name for the Network Manager IPAM Pool resource
 
 Type: `string`
 
-### <a name="input_name"></a> [name](#input\_name)
-
-Description: The name of the Network Manager IPAM Pool resource resource.
-
-Type: `string`
-
-### <a name="input_parent_pool_name"></a> [parent\_pool\_name](#input\_parent\_pool\_name)
-
-Description: The parent pool name for the Network Manager IPAM Pool resource
-
-Type: `string`
-
-## Optional Inputs
-
-The following input variables are optional (have default values):
+Default: `"example-ipam"`
 
 ### <a name="input_enable_telemetry"></a> [enable\_telemetry](#input\_enable\_telemetry)
 
@@ -169,6 +183,22 @@ object({
 ```
 
 Default: `null`
+
+### <a name="input_name"></a> [name](#input\_name)
+
+Description: The name of the Network Manager IPAM Pool resource resource.
+
+Type: `string`
+
+Default: `"example-ipam"`
+
+### <a name="input_parent_pool_name"></a> [parent\_pool\_name](#input\_parent\_pool\_name)
+
+Description: The parent pool name for the Network Manager IPAM Pool resource
+
+Type: `string`
+
+Default: `""`
 
 ### <a name="input_role_assignments"></a> [role\_assignments](#input\_role\_assignments)
 
@@ -220,7 +250,19 @@ map(object({
   }))
 ```
 
-Default: `{}`
+Default:
+
+```json
+{
+  "cidr1": {
+    "address_prefixes": [
+      "10.0.0.0/26"
+    ],
+    "description": "example",
+    "name": "ex-cidr1"
+  }
+}
+```
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

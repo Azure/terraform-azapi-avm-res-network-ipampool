@@ -30,6 +30,12 @@ resource "azapi_resource" "static_cidr" {
   schema_validation_enabled = false
 }
 
+resource "time_sleep" "wait_lock" {
+  destroy_duration = "10s"
+
+  depends_on = [azapi_resource.ipam_pool]
+}
+
 resource "azurerm_management_lock" "this" {
   count = var.lock != null ? 1 : 0
 
@@ -37,6 +43,8 @@ resource "azurerm_management_lock" "this" {
   name       = coalesce(var.lock.name, "lock-${var.lock.kind}")
   scope      = azapi_resource.ipam_pool.id
   notes      = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
+
+  depends_on = [time_sleep.wait_lock]
 }
 
 resource "azurerm_role_assignment" "this" {

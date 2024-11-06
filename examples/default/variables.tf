@@ -1,5 +1,6 @@
 variable "address_prefixes" {
   type        = list(string)
+  default     = ["10.0.0.0/24"]
   description = "The address prefixes for the Network Manager IPAM Pool resource"
 
   validation {
@@ -13,27 +14,14 @@ variable "address_prefixes" {
 
 variable "description" {
   type        = string
+  default     = ""
   description = "The description for the Network Manager IPAM Pool resource"
 }
 
 variable "display_name" {
   type        = string
+  default     = "example-ipam"
   description = "The display name for the Network Manager IPAM Pool resource"
-}
-
-variable "name" {
-  type        = string
-  description = "The name of the Network Manager IPAM Pool resource resource."
-
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9-]{1,64}$", var.name))
-    error_message = "The name must be between 1 and 64 characters long and can only contain letters, numbers and hyphen(-)."
-  }
-}
-
-variable "parent_pool_name" {
-  type        = string
-  description = "The parent pool name for the Network Manager IPAM Pool resource"
 }
 
 # required AVM interfaces
@@ -67,6 +55,23 @@ DESCRIPTION
     condition     = var.lock != null ? contains(["CanNotDelete", "ReadOnly"], var.lock.kind) : true
     error_message = "The lock level must be one of: 'None', 'CanNotDelete', or 'ReadOnly'."
   }
+}
+
+variable "name" {
+  type        = string
+  default     = "example-ipam"
+  description = "The name of the Network Manager IPAM Pool resource resource."
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]{1,64}$", var.name))
+    error_message = "The name must be between 1 and 64 characters long and can only contain letters, numbers and hyphen(-)."
+  }
+}
+
+variable "parent_pool_name" {
+  type        = string
+  default     = ""
+  description = "The parent pool name for the Network Manager IPAM Pool resource"
 }
 
 variable "role_assignments" {
@@ -104,7 +109,13 @@ variable "static_cidr_map" {
     address_prefixes = list(string)
     description      = optional(string, null)
   }))
-  default     = {}
+  default = {
+    cidr1 : {
+      name : "ex-cidr1"
+      address_prefixes = ["10.0.0.0/26"]
+      description      = "example"
+    }
+  }
   description = <<DESCRIPTION
 A map of Static CIDR to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
 

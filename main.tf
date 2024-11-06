@@ -1,8 +1,5 @@
 resource "azapi_resource" "ipam_pool" {
-  type      = "Microsoft.Network/networkManagers/ipamPools@2024-05-01"
-  parent_id = var.network_manager_id
-  name      = var.name
-  location  = var.location
+  type = "Microsoft.Network/networkManagers/ipamPools@2024-05-01"
   body = {
     properties = {
       addressPrefixes = var.address_prefixes
@@ -12,21 +9,24 @@ resource "azapi_resource" "ipam_pool" {
     }
     tags = var.tags
   }
+  location                  = var.location
+  name                      = var.name
+  parent_id                 = var.network_manager_id
   schema_validation_enabled = false
 }
 
 resource "azapi_resource" "static_cidr" {
   for_each = var.static_cidr_map
 
-  type      = "Microsoft.Network/networkManagers/ipamPools/staticCidrs@2024-05-01"
-  parent_id = azapi_resource.ipam_pool.id
-  name      = each.value.name
+  type = "Microsoft.Network/networkManagers/ipamPools/staticCidrs@2024-05-01"
   body = {
     properties = {
       addressPrefixes = each.value.address_prefixes
       description     = each.value.description
     }
   }
+  name                      = each.value.name
+  parent_id                 = azapi_resource.ipam_pool.id
   schema_validation_enabled = false
 }
 
@@ -47,6 +47,7 @@ resource "azurerm_role_assignment" "this" {
   condition                              = each.value.condition
   condition_version                      = each.value.condition_version
   delegated_managed_identity_resource_id = each.value.delegated_managed_identity_resource_id
+  principal_type                         = each.value.principal_type
   role_definition_id                     = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : null
   role_definition_name                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? null : each.value.role_definition_id_or_name
   skip_service_principal_aad_check       = each.value.skip_service_principal_aad_check

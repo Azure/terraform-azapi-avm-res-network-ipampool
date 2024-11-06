@@ -1,4 +1,4 @@
-output "ipam_pool_id" {
+output "resource_id" {
   description = <<DESCRIPTION
 The resource ID of the Network Manager IPAM Pool created.
   DESCRIPTION

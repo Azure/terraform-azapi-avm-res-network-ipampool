@@ -1,17 +1,9 @@
 terraform {
   required_version = "~> 1.5"
   required_providers {
-    azapi = {
-      source  = "azure/azapi"
-      version = "~> 2.0"
-    }
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 3.74"
-    }
-    modtm = {
-      source  = "azure/modtm"
-      version = "~> 0.3"
     }
     random = {
       source  = "hashicorp/random"
@@ -50,17 +42,17 @@ resource "azurerm_resource_group" "example" {
   name     = module.naming.resource_group.name_unique
 }
 
-data "azurerm_subscription" "current" {
-}
+data "azurerm_subscription" "current" {}
 
 resource "azurerm_network_manager" "example" {
-  name                = "example-vnet-manager"
   location            = azurerm_resource_group.example.location
+  name                = "example-vnet-manager"
   resource_group_name = azurerm_resource_group.example.name
+  scope_accesses      = ["Connectivity", "SecurityAdmin"]
+
   scope {
     subscription_ids = [data.azurerm_subscription.current.id]
   }
-  scope_accesses = ["Connectivity", "SecurityAdmin"]
 }
 
 # This is the module call

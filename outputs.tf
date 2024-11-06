@@ -1,6 +1,16 @@
-output "private_endpoints" {
+output "resource_id" {
   description = <<DESCRIPTION
-  A map of the private endpoints created.
+The resource ID of the Network Manager IPAM Pool created.
   DESCRIPTION
-  value       = var.private_endpoints_manage_dns_zone_group ? azurerm_private_endpoint.this_managed_dns_zone_groups : azurerm_private_endpoint.this_unmanaged_dns_zone_groups
+  value       = azapi_resource.ipam_pool.id
+}
+
+output "static_cidr_ids" {
+  description = <<DESCRIPTION
+A list of resource IDs of the Network Manager Static CIDR created.
+  DESCRIPTION
+  value = [
+    for v in azapi_resource.static_cidr :
+    v.id
+  ]
 }

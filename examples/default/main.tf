@@ -1,6 +1,10 @@
 terraform {
   required_version = "~> 1.5"
   required_providers {
+    azapi = {
+      source  = "azure/azapi"
+      version = "~> 2.0"
+    }
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 3.74"
@@ -19,7 +23,6 @@ terraform {
 provider "azurerm" {
   features {}
 }
-
 
 ## Section to provide a random Azure region for the resource group
 # This allows us to randomize the region for the resource group.
@@ -42,22 +45,41 @@ module "naming" {
 }
 
 # This is required for resource modules
-resource "azurerm_resource_group" "this" {
+resource "azurerm_resource_group" "example" {
   location = module.regions.regions[random_integer.region_index.result].name
   name     = module.naming.resource_group.name_unique
+}
+
+data "azurerm_subscription" "current" {
+}
+
+resource "azurerm_network_manager" "example" {
+  name                = "example-vnet-manager"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  scope {
+    subscription_ids = [data.azurerm_subscription.current.id]
+  }
+  scope_accesses = ["Connectivity", "SecurityAdmin"]
 }
 
 # This is the module call
 # Do not specify location here due to the randomization above.
 # Leaving location as `null` will cause the module to use the resource group location
 # with a data source.
-module "test" {
+module "ipampool" {
   source = "../../"
-  # source             = "Azure/avm-<res/ptn>-<name>/azurerm"
-  # ...
-  location            = azurerm_resource_group.this.location
-  name                = "TODO" # TODO update with module.naming.<RESOURCE_TYPE>.name_unique
-  resource_group_name = azurerm_resource_group.this.name
-
-  enable_telemetry = var.enable_telemetry # see variables.tf
+  # source             = "Azure/avm-network-ipampool/azapi"
+  location           = azurerm_resource_group.example.location
+  network_manager_id = azurerm_network_manager.example.id
+  name               = var.name
+  address_prefixes   = var.address_prefixes
+  parent_pool_name   = var.parent_pool_name
+  display_name       = var.display_name
+  description        = var.description
+  static_cidr_map    = var.static_cidr_map
+  tags               = var.tags
+  enable_telemetry   = var.enable_telemetry # see variables.tf
+  lock               = var.lock
+  role_assignments   = var.role_assignments
 }
